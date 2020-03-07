@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras import Sequential
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Flatten, Dense, Conv2D, MaxPool2D, Dropout, BatchNormalization, Reshape
@@ -25,8 +26,6 @@ class CNNDiscriminatorGAN:
         model.add(Conv2D(filters=32, kernel_size=(3, 1), padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(1, activation='sigmoid'))
-        model.build()
-        model.summary()
         return model
 
     
@@ -46,7 +45,9 @@ class CNNDiscriminatorGAN:
         return model
 
     def train(self, X_train, epochs=20000, batch = 32, save_interval = 100):
-
+        
+        if len(X_train) < batch:
+            batch= len(X_train)
         for cnt in range(epochs):
 
             ## train discriminator
