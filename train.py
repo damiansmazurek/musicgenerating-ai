@@ -24,7 +24,7 @@ def train(training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_inter
 
     #Set parameters for model
     width = len(train_data[0])
-    height = max_height
+    height = 1025#max_height
     channels = 1
     info("Setting data size to: %d x %d x %d", width,height,channels)
     
@@ -34,11 +34,11 @@ def train(training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_inter
     debug("data size set to %s",train_data_norm.shape)
 
     debug("Generating GAN")
-    gan = CNNDiscriminatorGAN(width,height,channels)
+    gan = CNNDiscriminatorGAN(width,height,channels,model_path)
 
     #train model
     info("Start training")
-    gan.train(train_data,epochs, batch, save_interval)
+    gan.train(train_data_norm,epochs, batch, save_interval)
 
     #generate musicspect2wav(gan.generate(),spectrum[1],"data-gen.wav")
 

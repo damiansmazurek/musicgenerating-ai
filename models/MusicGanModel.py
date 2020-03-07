@@ -5,17 +5,27 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Flatten, Dense, Conv2D, MaxPool2D, Dropout, BatchNormalization, Reshape
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LeakyReLU
+from tensorflow.keras.callbacks import ModelCheckpoint
+from logging import log, info, debug 
+import os
 
 class CNNDiscriminatorGAN:
-    def __init__(self, width, height, channels):
+    def __init__(self, width, height, channels, ouputmodelpath):
+        self.disc_output_model_path = ouputmodelpath+"/discr.hfd5"
+        self.gen_output_model_path = ouputmodelpath+"/gen.hfd5"
         self.width = width
         self.height = height
         self.channels = channels
+        debug('Setting Adam optimizer')
         self.optimizer = Adam(lr=0.0002, beta_1=0.5, decay=8e-8)
+        debug('Creating generator model.')
         self.g_model = self.__generator()
+        debug('Compiling of model')
         self.g_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
+        debug('Creating discriminator')
         self.d_model = self.__discriminator()
         self.d_model.compile(loss='binary_crossentropy', optimizer=self.optimizer,metrics=['accuracy'])
+        debug('Stacl model')
         self.stack_model = Sequential()
         self.stack_model.add(self.g_model)
         self.stack_model.add(self.d_model)
@@ -23,9 +33,13 @@ class CNNDiscriminatorGAN:
 
     def __discriminator(self):
         model = Sequential()
-        model.add(Conv2D(filters=32, kernel_size=(3, 1), padding='same'))
+        model.add(Conv2D(filters=32, kernel_size=(3, 3), padding='same', input_shape=(self.width, self.height, self.channels)))
         model.add(LeakyReLU(alpha=0.2))
+        model.add(Flatten())
         model.add(Dense(1, activation='sigmoid'))
+        if os.path.exists(self.disc_output_model_path):
+            info("Loading discriminator weights.")
+            model.load_weights(self.disc_output_model_path)
         return model
 
     
@@ -42,10 +56,13 @@ class CNNDiscriminatorGAN:
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
         model.add(Reshape((self.width, self.height, self.channels)))
+        if os.path.exists(self.gen_output_model_path):
+            info("Loading generator weights.")
+            model.load_weights(self.gen_output_model_path)
         return model
 
     def train(self, X_train, epochs=20000, batch = 32, save_interval = 100):
-        
+        debug('Check data size')
         if len(X_train) < batch:
             batch= len(X_train)
         for cnt in range(epochs):
@@ -56,24 +73,22 @@ class CNNDiscriminatorGAN:
 
             gen_noise = np.random.normal(0, 1, (np.int64(batch/2), 100))
             syntetic_data = self.g_model.predict(gen_noise)
-
             x_combined_batch = np.concatenate((legit_data, syntetic_data))
             y_combined_batch = np.concatenate((np.ones((np.int64(batch/2), 1)), np.zeros((np.int64(batch/2), 1))))
-
+            debug('Start training discriminator')
             d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
-
+            debug('End training of discriminator for batch')
 
             # train generator
-
             noise = np.random.normal(0, 1, (batch, 100))
             y_mislabled = np.ones((batch, 1))
-
+            debug('Start training stacked model')
             g_loss = self.stack_model.train_on_batch(noise, y_mislabled)
-
             print ('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
-           # if cnt % save_interval == 0:
-            #    self.plot_images(save2file=True, step=cnt)
+            if cnt % save_interval == 0:
+                self.d_model.save(self.disc_output_model_path)
+                self.g_model.save(self.gen_output_model_path)
 
     def generate(self):
          gen_noise = np.random.normal(0, 1, (np.int64(batch/2), 100))
