@@ -87,6 +87,7 @@ class CNNDiscriminatorGAN:
             info('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
             if cnt % save_interval == 0:
+                info('Saving model state after epoch:  %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
                 self.__run_save_model(save_callback)
                 
         info('Training completed, exporting models')
