@@ -10,7 +10,7 @@ from logging import log, info, debug
 import os
 from utils import ModelsSufix
 
-class CNNDiscriminatorGAN:
+class GANMusicGenerator:
     def __init__(self, width, height, channels, ouputmodelpath):
         self.disc_output_model_path = ouputmodelpath + ModelsSufix.DICSR
         self.gen_output_model_path = ouputmodelpath + ModelsSufix.GEN

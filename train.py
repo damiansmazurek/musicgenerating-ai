@@ -1,5 +1,5 @@
 from utils import wav2spect, spect2wav, normalize_spectrums, upload_model, ModelsSufix
-from models.MusicGanModel import CNNDiscriminatorGAN
+from models.MusicGanModel import GANMusicGenerator
 import numpy as np
 import os
 from logging import log, info, debug, basicConfig, DEBUG, INFO
@@ -42,7 +42,7 @@ class TrainingController:
         debug("data size set to %s",train_data_norm.shape)
 
         debug("Generating GAN")
-        gan = CNNDiscriminatorGAN(width,height,channels,model_path)
+        gan = GANMusicGenerator(width,height,channels,model_path)
 
         #train model
         info("Start training")
