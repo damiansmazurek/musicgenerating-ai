@@ -44,8 +44,14 @@ def download_model(model_bucket_name, model_name, model_local_path):
         storage_client = storage.Client()
         bucket = storage_client.bucket(model_bucket_name)
         blob_disc = bucket.blob(model_name+ModelsSufix.DICSR)
-        blob_gen = bucket.blob(model_name+ModelsSufix.GEN)
-        blob_disc.download_to_filename(model_local_path+ModelsSufix.DICSR)
+        if blob_disc.exists():
+            blob_disc.download_to_filename(model_local_path+ModelsSufix.DICSR)
+        else:
+            info('No driscriminator model found in cloud storage')
+        if blob_gen.exists():
+            blob_gen = bucket.blob(model_name+ModelsSufix.GEN)
+        else:
+            info('No generator model found in cloud storage')  
         blob_gen.download_to_filename(model_local_path+ModelsSufix.GEN)
     except NotFound:
         info('No model repository found.')
