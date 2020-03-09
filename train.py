@@ -11,7 +11,7 @@ class TrainingController:
         self. model_blob_path = model_blob_path
 
     def save_callback(self, model_path_gen, model_path_disc):
-        info('Uploading model to bucket')
+        info('Uploading model to bucket %s'%(self.model_bucket))
         upload_model(self.model_bucket, self.model_blob_path, model_path_disc, model_path_gen)
 
     def train(self, training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_interval=100, max_height = 1025):
