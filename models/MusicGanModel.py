@@ -99,5 +99,5 @@ class CNNDiscriminatorGAN:
         info('Models saved locally....')
         if callback != None:
             info('Start uploading models to cloud...')
-            callback(self.disc_output_model_path, self.disc_output_model_path)
+            callback(self.gen_output_model_path, self.disc_output_model_path)
         
