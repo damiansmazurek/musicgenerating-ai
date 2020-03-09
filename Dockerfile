@@ -1,5 +1,5 @@
 FROM tensorflow/tensorflow:2.0.1-gpu-py3
-COPY . .
+COPY . . 
 RUN pip install -r requirements.txt
 ENV CMD = 'train'
 ENV N_FFT = '2048'
