@@ -2,6 +2,7 @@ import librosa
 import numpy as np
 from logging import log, info, debug, basicConfig, DEBUG, INFO
 from google.cloud import storage
+from google.api_core.exceptions import NotFound
 
 def wav2spect(filename, N_FFT):
     x, sr = librosa.load(filename)
@@ -32,18 +33,21 @@ def download_blobs(source_bucket_name, local_directory):
     storage_client = storage.Client()
     blob_list = storage_client.list_blobs(source_bucket_name)
     i = 0
-    for blob_item in blob_list:
-        with open(local_directory+'/sample'+i+'.wav') as file_obj:
+    for blob_item in blob_list: 
+        with open(local_directory+'/sample'+str(i)+'.wav','wb') as file_obj:
             storage_client.download_blob_to_file(blob_item, file_obj)
         i = i+1
 
 def download_model(model_bucket_name, model_name, model_local_path):
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(model_bucket_name)
-    blob_disc = bucket.blob(model_bucket_name+'.disc.h5')
-    blob_gen = bucket.blob(model_bucket_name+'.gen.h5')
-    blob_disc.download_to_filename(model_local_path+"/disc.h5")
-    blob_gen.download_to_filename(model_local_path+'/gen.h5')
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(model_bucket_name)
+        blob_disc = bucket.blob(model_bucket_name+'.disc.h5')
+        blob_gen = bucket.blob(model_bucket_name+'.gen.h5')
+        blob_disc.download_to_filename(model_local_path+"/disc.h5")
+        blob_gen.download_to_filename(model_local_path+'/gen.h5')
+    except NotFound:
+        info('No model repository found.')
 
 def upload_model(model_bucket, model_blob_path, model_path_disc, model_path_gen):
     storage_client = storage.Client()

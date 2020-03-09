@@ -95,6 +95,8 @@ class CNNDiscriminatorGAN:
     def __run_save_model(self, callback):
         self.d_model.save(self.disc_output_model_path)
         self.g_model.save(self.gen_output_model_path)
+        info('Models saved locally....')
         if callback != None:
+            info('Start uploading models to cloud...')
             callback(self.disc_output_model_path, self.disc_output_model_path)
         
