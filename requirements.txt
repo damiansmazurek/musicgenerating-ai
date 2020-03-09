@@ -1,2 +1,4 @@
 librosa
 numpy
+google.cloud
+google-cloud-storage

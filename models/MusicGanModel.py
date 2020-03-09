@@ -8,11 +8,12 @@ from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.callbacks import ModelCheckpoint
 from logging import log, info, debug 
 import os
+from utils import ModelsSufix
 
 class CNNDiscriminatorGAN:
     def __init__(self, width, height, channels, ouputmodelpath):
-        self.disc_output_model_path = ouputmodelpath+"/discr.h5"
-        self.gen_output_model_path = ouputmodelpath+"/gen.h5"
+        self.disc_output_model_path = ouputmodelpath + ModelsSufix.DICSR
+        self.gen_output_model_path = ouputmodelpath + ModelsSufix.GEN
         self.width = width
         self.height = height
         self.channels = channels
@@ -42,7 +43,6 @@ class CNNDiscriminatorGAN:
             model.load_weights(self.disc_output_model_path)
         return model
 
-    
     def __generator(self):
         model = Sequential()
         model.add(Dense(256, input_shape=(self.height,)))
@@ -61,7 +61,7 @@ class CNNDiscriminatorGAN:
             model.load_weights(self.gen_output_model_path)
         return model
 
-    def train(self, X_train, epochs=20000, batch = 32, save_interval = 100):
+    def train(self, X_train, epochs=20000, batch = 32, save_interval = 100, save_callback= None):
         debug('Check data size')
         if len(X_train) < batch:
             batch= len(X_train)
@@ -87,6 +87,14 @@ class CNNDiscriminatorGAN:
             info('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
             if cnt % save_interval == 0:
-                self.d_model.save(self.disc_output_model_path)
-                self.g_model.save(self.gen_output_model_path)
-   
+                self.__run_save_model(save_callback)
+                
+        info('Training completed, exporting models')
+        self.__run_save_model(save_callback)
+
+    def __run_save_model(self, callback):
+        self.d_model.save(self.disc_output_model_path)
+        self.g_model.save(self.gen_output_model_path)
+        if callback != None:
+            callback(self.disc_output_model_path, self.disc_output_model_path)
+        
