@@ -40,6 +40,7 @@ def download_blobs(source_bucket_name, local_directory):
 
 def download_model(model_bucket_name, model_name, model_local_path):
     try:
+        info('Downloading models from GCP storage repository')
         storage_client = storage.Client()
         bucket = storage_client.bucket(model_bucket_name)
         blob_disc = bucket.blob(model_name+ModelsSufix.DICSR)
