@@ -86,7 +86,7 @@ class CNNDiscriminatorGAN:
             g_loss = self.stack_model.train_on_batch(noise, y_mislabled)
             info('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
-            if cnt % save_interval == 0:
+            if (cnt+1) % save_interval == 0:
                 info('Saving model state after epoch:  %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
                 self.__run_save_model(save_callback)
                 
