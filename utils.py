@@ -42,10 +42,10 @@ def download_model(model_bucket_name, model_name, model_local_path):
     try:
         storage_client = storage.Client()
         bucket = storage_client.bucket(model_bucket_name)
-        blob_disc = bucket.blob(model_bucket_name+'.disc.h5')
-        blob_gen = bucket.blob(model_bucket_name+'.gen.h5')
-        blob_disc.download_to_filename(model_local_path+"/disc.h5")
-        blob_gen.download_to_filename(model_local_path+'/gen.h5')
+        blob_disc = bucket.blob(model_bucket_name+ModelsSufix.DICSR)
+        blob_gen = bucket.blob(model_bucket_name+ModelsSufix.GEN)
+        blob_disc.download_to_filename(model_local_path+ModelsSufix.DICSR)
+        blob_gen.download_to_filename(model_local_path+ModelsSufix.GEN)
     except NotFound:
         info('No model repository found.')
 
