@@ -11,8 +11,8 @@ import os
 
 class CNNDiscriminatorGAN:
     def __init__(self, width, height, channels, ouputmodelpath):
-        self.disc_output_model_path = ouputmodelpath+"/discr.hfd5"
-        self.gen_output_model_path = ouputmodelpath+"/gen.hfd5"
+        self.disc_output_model_path = ouputmodelpath+"/discr.h5"
+        self.gen_output_model_path = ouputmodelpath+"/gen.h5"
         self.width = width
         self.height = height
         self.channels = channels
@@ -45,7 +45,7 @@ class CNNDiscriminatorGAN:
     
     def __generator(self):
         model = Sequential()
-        model.add(Dense(256, input_shape=(100,)))
+        model.add(Dense(256, input_shape=(self.height,)))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(512))
@@ -71,7 +71,7 @@ class CNNDiscriminatorGAN:
             random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
             legit_data = X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels)
 
-            gen_noise = np.random.normal(0, 1, (np.int64(batch/2), 100))
+            gen_noise = np.random.normal(0, 1, (np.int64(batch/2), self.height))
             syntetic_data = self.g_model.predict(gen_noise)
             x_combined_batch = np.concatenate((legit_data, syntetic_data))
             y_combined_batch = np.concatenate((np.ones((np.int64(batch/2), 1)), np.zeros((np.int64(batch/2), 1))))
@@ -79,18 +79,14 @@ class CNNDiscriminatorGAN:
             d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
             debug('End training of discriminator for batch')
 
-            # train generator
-            noise = np.random.normal(0, 1, (batch, 100))
+            # train stack_model
+            noise = np.random.normal(0, 1, (batch, self.height))
             y_mislabled = np.ones((batch, 1))
             debug('Start training stacked model')
             g_loss = self.stack_model.train_on_batch(noise, y_mislabled)
-            print ('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
+            info('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
             if cnt % save_interval == 0:
                 self.d_model.save(self.disc_output_model_path)
                 self.g_model.save(self.gen_output_model_path)
-
-    def generate(self):
-         gen_noise = np.random.normal(0, 1, (np.int64(batch/2), 100))
-         return self.g_model.predict(gen_noise)
    

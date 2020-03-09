@@ -9,7 +9,7 @@ def wav2spect(filename, N_FFT):
     S = np.log1p(np.abs(S))
     return S, sr
 
-def spect2wav(spectrum, sr, outfile):
+def spect2wav(spectrum, sr, outfile, N_FFT):
     a = np.exp(spectrum) - 1
     p = 2 * np.pi * np.random.random_sample(spectrum.shape) - np.pi
     for i in range(50):
