@@ -1,4 +1,4 @@
-from utils import wav2spect, spect2wav, normalize_spectrums, upload_model, ModelsSufix
+from utils import wav2spect, spect2wav, normalize_spectrums, upload_model, ModelsSufix, plot_spectrum
 from models.MusicGanModel import GANMusicGenerator
 import numpy as np
 import os
@@ -24,6 +24,7 @@ class TrainingController:
                 continue
             info('Creating FFT for file: %s',filename)
             spectrum, sr = wav2spect(training_set_path+'/'+filename, N_FFT)
+            plot_spectrum(spectrum,filename+'.png')
             if len(spectrum[0]) > max_height:
                 debug("Change max_height to %d", len(spectrum[0]))
             train_data.append(np.asarray(spectrum))
@@ -53,12 +54,10 @@ class TrainingController:
         gan.train(train_data_norm,epochs, batch, save_interval,save_bucket_callback)
 
     def generate(self, model_path, otputfile, N_FFT, sample_number = 1025, sr = 22050):
-        batch = 4
+        # TODO: Add no model found exception here
         gan = tf.keras.models.load_model(model_path+ ModelsSufix.GEN)
-        spectrum = gan.predict(np.random.normal(0, 1, (np.int64(batch/2), sample_number)))
-        i = 0
-        for single in spectrum:
-            debug(single)
-            i = i+1
-            spect2wav(single.reshape((single.shape[0],single.shape[1])),22050,otputfile+'/gen'+str(i)+'.wav', N_FFT)
+        spectrum = gan.predict(np.random.normal(0, 1, 1, sample_number))
+        sp_data= np.squeeze(spectrum)
+        plot_spectrum(sp_data,'gen_spec_all.png')
+        spect2wav(sp_data, sr, otputfile+'/gen_music.wav', N_FFT)
 

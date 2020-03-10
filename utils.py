@@ -3,6 +3,16 @@ import numpy as np
 from logging import log, info, debug, basicConfig, DEBUG, INFO
 from google.cloud import storage
 from google.api_core.exceptions import NotFound
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
+
+def plot_spectrum(gen_spectrum, image_name):
+    plt.figure(figsize=(5, 5))
+    # we then use the 2nd column.
+    plt.subplot(1, 1, 1)
+    plt.title("CNN Voice Transfer Result")
+    plt.imsave(image_name, gen_spectrum[:400, :])
 
 def wav2spect(filename, N_FFT):
     x, sr = librosa.load(filename)
@@ -47,7 +57,7 @@ def download_model(model_bucket_name, model_name, model_local_path):
         if blob_disc.exists():
             blob_disc.download_to_filename(model_local_path+ModelsSufix.DICSR)
         else:
-            info('No driscriminator model found in cloud storage')
+            info('No discriminator model found in cloud storage')
         blob_gen = bucket.blob(model_name+ModelsSufix.GEN)
         if blob_gen.exists():
             blob_gen.download_to_filename(model_local_path+ModelsSufix.GEN)
