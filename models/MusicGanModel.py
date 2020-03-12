@@ -93,7 +93,7 @@ class GANMusicGenerator:
             d_loss = -0.1
             for i in range(discriminator_epoch_mul):
                 d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
-                info('d_loss %f form discr_epoch_mul %d'%(d_loss,i))
+                info('d_loss %f for true data and %f for fake data form discr_epoch_mul %d'%(d_loss[0], d_loss[1],i))
             debug('End training of discriminator for batch')
 
             # train generator
