@@ -18,7 +18,7 @@ class GANMusicGenerator:
         self.height = height
         self.channels = channels
         debug('Setting Adam optimizer')
-        self.optimizer = Adam(lr=0.0002, beta_1=0.5, decay=8e-8)
+        self.optimizer = Adam(lr=0.02, beta_1=0.5, decay=8e-8)
         debug('Creating generator model.')
         self.g_model = self.__generator()
         debug('Compiling of model')
