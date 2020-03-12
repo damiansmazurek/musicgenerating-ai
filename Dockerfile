@@ -14,4 +14,5 @@ ENV MODEL_BUCKET = 'none'
 ENV MODEL_NAME = 'musicgenai'
 ENV TRAINING_SET_BUCKET = 'none'
 ENV OUTPUT_FILE = 'output/generated'
+ENV DISCR_EPOCH_MUL = '10'
 CMD python setup.py

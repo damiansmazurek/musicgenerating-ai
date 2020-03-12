@@ -75,29 +75,33 @@ class GANMusicGenerator:
             model.load_weights(self.gen_output_model_path)
         return model
 
-    def train(self, X_train, epochs=20000, batch = 32, save_interval = 100, save_callback= None):
-        debug('Check data size')
-        if len(X_train) < batch:
-            batch= len(X_train)
+    def train(self, X_train, epochs=20000, batch = 32, save_interval = 100, discriminator_epoch_mul = 2, save_callback= None):
         for cnt in range(epochs):
-
             ## train discriminator
             random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
             legit_data = X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels)
-            # generating preditions array with size of half batch.
+            
+            # Generating preditions array with size of half batch.
             gen_noise = np.random.normal(0, 1, (np.int64(batch/2), self.height))
-            syntetic_data = self.g_model.predict(gen_noise)
-            x_combined_batch = np.concatenate((legit_data, syntetic_data))
+            fake_data = self.g_model.predict(gen_noise)
+
+            # Creating combined dataset with true data and fake ones
+            x_combined_batch = np.concatenate((legit_data, fake_data))
             y_combined_batch = np.concatenate((np.ones((np.int64(batch/2), 1)), np.zeros((np.int64(batch/2), 1))))
+
             debug('Start training discriminator')
-            d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
+            d_loss = -1
+            for i in range(discriminator_epoch_mul):
+                d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
             debug('End training of discriminator for batch')
 
-            # train stack_model
+            # train generator
             noise = np.random.normal(0, 1, (batch, self.height))
             y_mislabled = np.ones((batch, 1))
+
             debug('Start training stacked model')
             g_loss = self.stack_model.train_on_batch(noise, y_mislabled)
+            
             info('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
             if (cnt+1) % save_interval == 0:

@@ -43,6 +43,7 @@ training_controller = TrainingController(MODEL_BUCKET, MODEL_NAME)
 
 # Run specyfic functionality based on global command
 if CMD == 'train':
+    DISCR_EPOCH_MUL = int(os.getenv('DISCR_EPOCH_MUL'))
     TRAINING_SET_PATH= os.getenv('TRAINING_SET_PATH')
     if not os.path.exists(TRAINING_SET_PATH):
         os.makedirs(TRAINING_SET_PATH)
@@ -54,7 +55,7 @@ if CMD == 'train':
     if TRAINING_SET_BUCKET != 'none':
         download_blobs(TRAINING_SET_BUCKET,TRAINING_SET_PATH)
 
-    training_controller.train(TRAINING_SET_PATH, N_FFT, MODEL_OUTPUT, EPOCH, BATCH_SIZE, SAVE_INTERVAL, SAMPLE_NUMBER)
+    training_controller.train(TRAINING_SET_PATH, N_FFT, MODEL_OUTPUT, EPOCH, BATCH_SIZE, SAVE_INTERVAL, SAMPLE_NUMBER, DISCR_EPOCH_MUL)
 
 else:
     OUTPUT_FILE = os.getenv('OUTPUT_FILE')

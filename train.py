@@ -14,7 +14,7 @@ class TrainingController:
         info('Uploading model to bucket %s'%(self.model_bucket))
         upload_model(self.model_bucket, self.model_blob_path, model_path_disc, model_path_gen)
 
-    def train(self, training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_interval=100, max_height = 1025):
+    def train(self, training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_interval=100, max_height = 1025, discr_epoch_mul = 1):
         #Open files and fft them
         info('Training started')
         train_data = []
@@ -31,12 +31,16 @@ class TrainingController:
             debug("SR", sr)
             sr_lists.append(sr)
 
-        #Set parameters for model
+        # Set parameters for model
         width = len(train_data[0])
         height = max_height
         channels = 1
+        # Check if batch is not bigger then training set.
+        if batch > len(train_data):
+            batch = len(train_data)
+            info('Batch is bigger then dataset sample, changing batch size to %d'%(batch))
+
         info("Setting data size to: %d x %d x %d", width,height,channels)
-        
         train_data = normalize_spectrums(train_data,width,height)
 
         train_data_norm= np.asarray(train_data)
@@ -51,7 +55,7 @@ class TrainingController:
         if self.model_bucket != None:
             info('Exporting models mode to GCP bucket is turned on')
             save_bucket_callback = self.save_callback
-        gan.train(train_data_norm,epochs, batch, save_interval,save_bucket_callback)
+        gan.train(train_data_norm,epochs, batch, save_interval, discr_epoch_mul, save_bucket_callback)
 
     def generate(self, model_path, otputfile, N_FFT, sample_number = 1025, sr = 22050):
         # TODO: Add no model found exception here
