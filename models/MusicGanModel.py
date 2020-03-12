@@ -90,7 +90,7 @@ class GANMusicGenerator:
             y_combined_batch = np.concatenate((np.ones((np.int64(batch/2), 1)), np.zeros((np.int64(batch/2), 1))))
 
             debug('Start training discriminator')
-            d_loss = -1
+            d_loss = -0.1
             for i in range(discriminator_epoch_mul):
                 d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
                 info('d_loss %f form discr_epoch_mul %d'%(d_loss,i))
