@@ -18,14 +18,15 @@ class GANMusicGenerator:
         self.height = height
         self.channels = channels
         debug('Setting Adam optimizer')
-        self.optimizer = Adam(lr=0.02, beta_1=0.5, decay=8e-8)
+        self.optimizer = Adam(lr=0.0002, beta_1=0.5, decay=8e-8)
         debug('Creating generator model.')
         self.g_model = self.__generator()
         debug('Compiling of model')
         self.g_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         debug('Creating discriminator')
+        self.d_optimizer = Adam(lr=0.004, beta_1=0.5, decay=8e-8)
         self.d_model = self.__discriminator()
-        self.d_model.compile(loss='binary_crossentropy', optimizer=self.optimizer,metrics=['accuracy'])
+        self.d_model.compile(loss='binary_crossentropy', optimizer=self.d_optimizer,metrics=['accuracy'])
         debug('Stacl model')
         self.stack_model = Sequential()
         self.stack_model.add(self.g_model)
