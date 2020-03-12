@@ -49,14 +49,14 @@ class TrainingController:
         info("Start training")
         save_bucket_callback = None
         if self.model_bucket != None:
-            info('Exporting models to GCP bucket')
+            info('Exporting models mode to GCP bucket is turned on')
             save_bucket_callback = self.save_callback
         gan.train(train_data_norm,epochs, batch, save_interval,save_bucket_callback)
 
     def generate(self, model_path, otputfile, N_FFT, sample_number = 1025, sr = 22050):
         # TODO: Add no model found exception here
         gan = tf.keras.models.load_model(model_path+ ModelsSufix.GEN)
-        spectrum = gan.predict(np.random.normal(0, 1, 1, sample_number))
+        spectrum = gan.predict(np.random.normal(0, 1, sample_number))
         sp_data= np.squeeze(spectrum)
         plot_spectrum(sp_data,'gen_spec_all.png')
         spect2wav(sp_data, sr, otputfile+'/gen_music.wav', N_FFT)
