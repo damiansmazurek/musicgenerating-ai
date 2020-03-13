@@ -24,10 +24,9 @@ class GANMusicGenerator:
         debug('Compiling of model')
         self.g_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         debug('Creating discriminator')
-        self.d_optimizer = Adam(lr=0.004, beta_1=0.5, decay=8e-8)
+        self.d_optimizer = Adam(lr=0.02)
         self.d_model = self.__discriminator()
         self.d_model.compile(loss='binary_crossentropy', optimizer=self.d_optimizer,metrics=['accuracy'])
-        debug('Stacl model')
         self.stack_model = Sequential()
         self.stack_model.add(self.g_model)
         self.stack_model.add(self.d_model)
@@ -78,6 +77,7 @@ class GANMusicGenerator:
 
     def train(self, X_train, epochs=20000, batch = 32, save_interval = 100, discriminator_epoch_mul = 2, save_callback= None):
         for cnt in range(epochs):
+
             ## train discriminator
             random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
             legit_data = X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels)
@@ -92,9 +92,8 @@ class GANMusicGenerator:
 
             debug('Start training discriminator')
             d_loss = []
-            for i in range(discriminator_epoch_mul):
-                d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
-                info('d_loss %f for true data and %f for fake data form discr_epoch_mul %d'%(d_loss[0], d_loss[1],i))
+            self.d_model.trainable = False
+            d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
             debug('End training of discriminator for batch')
 
             # train generator
