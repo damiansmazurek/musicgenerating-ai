@@ -14,7 +14,7 @@ class TrainingController:
         info('Uploading model to bucket %s'%(self.model_bucket))
         upload_model(self.model_bucket, self.model_blob_path, model_path_disc, model_path_gen)
 
-    def train(self, training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_interval=100, max_height = 1025, discr_epoch_mul = 1):
+    def train(self, training_set_path, N_FFT, model_path, epochs=1000, batch=4, save_interval=100, max_height = 1025, smoothing_factor = 0.1):
         #Open files and fft them
         info('Training started')
         train_data = []
@@ -55,7 +55,7 @@ class TrainingController:
         if self.model_bucket != None:
             info('Exporting models mode to GCP bucket is turned on')
             save_bucket_callback = self.save_callback
-        gan.train(train_data_norm,epochs, batch, save_interval, discr_epoch_mul, save_bucket_callback)
+        gan.train(train_data_norm,epochs, batch, save_interval, smoothing_factor, save_bucket_callback)
 
     def generate(self, model_path, otputfile, N_FFT, sample_number = 1025, sr = 22050):
         # TODO: Add no model found exception here

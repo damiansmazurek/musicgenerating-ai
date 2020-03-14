@@ -35,7 +35,7 @@ class GANMusicGenerator:
     def __discriminator(self):
         model = Sequential()
         model.add(GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels) ))
-        model.add(Conv2D(filters=32, kernel_size=(3, 1), padding='same'))
+        model.add(Conv2D(filters=128, kernel_size=(3, 1), padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(0.25))
         model.add(Flatten())
@@ -58,7 +58,7 @@ class GANMusicGenerator:
             model.load_weights(self.gen_output_model_path)
         return model
 
-    def train(self, X_train, epochs=20000, batch = 1, save_interval = 100, discriminator_epoch_mul = 2, save_callback= None):
+    def train(self, X_train, epochs=20000, batch = 1, save_interval = 100, smoothing_factor = 0.1, save_callback= None):
         for cnt in range(epochs):
             # for single file
             random_index = 0
@@ -76,7 +76,7 @@ class GANMusicGenerator:
 
             # Creating combined dataset with true data and fake ones
             x_combined_batch = np.concatenate((legit_data, fake_data))
-            y_combined_batch = np.concatenate((np.ones((np.int64(batch), 1)), np.zeros((np.int64(batch), 1))))
+            y_combined_batch = self.__label_smoothing(np.concatenate((np.ones((np.int64(batch), 1)), np.zeros((np.int64(batch), 1)))),smoothing_factor)
 
             debug('Start training discriminator')
             d_loss = []
@@ -107,4 +107,10 @@ class GANMusicGenerator:
         if callback != None:
             info('Start uploading models to cloud...')
             callback(self.gen_output_model_path, self.disc_output_model_path)
-        
+    
+    def __label_smoothing(self, labels, smoothing_factor):
+        # smooth the labels
+        labels *= (1 - smoothing_factor)
+        labels += (smoothing_factor / labels.shape[1])
+        # returned the smoothed labels
+        return labels
