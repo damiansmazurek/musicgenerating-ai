@@ -35,7 +35,7 @@ class GANMusicGenerator:
     def __discriminator(self):
         model = Sequential()
         model.add(GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels) ))
-        model.add(Conv2D(filters=32, kernel_size=(3, 3), padding='same'))
+        model.add(Conv2D(filters=32, kernel_size=(3, 1), padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(0.25))
         model.add(Flatten())
