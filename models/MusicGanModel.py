@@ -37,19 +37,6 @@ class GANMusicGenerator:
         model.add(Conv2D(filters=32, kernel_size=(3, 3), padding='same', input_shape=(self.width, self.height, self.channels)))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dropout(0.25))
-        model.add(Conv2D(64, kernel_size=3, strides=2, padding="same"))
-        model.add(ZeroPadding2D(padding=((0,1),(0,1))))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Conv2D(128, kernel_size=3, strides=2, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Conv2D(256, kernel_size=3, strides=1, padding="same"))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
         model.add(Flatten())
         model.add(Dense(1, activation='sigmoid'))
         if os.path.exists(self.disc_output_model_path):
@@ -62,9 +49,6 @@ class GANMusicGenerator:
         model.add(Dense(256, input_shape=(self.height,)))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(512))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(1024))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
@@ -75,20 +59,25 @@ class GANMusicGenerator:
             model.load_weights(self.gen_output_model_path)
         return model
 
-    def train(self, X_train, epochs=20000, batch = 32, save_interval = 100, discriminator_epoch_mul = 2, save_callback= None):
+    def train(self, X_train, epochs=20000, batch = 1, save_interval = 100, discriminator_epoch_mul = 2, save_callback= None):
         for cnt in range(epochs):
-
-            ## train discriminator
-            random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
-            legit_data = X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels)
+            # for single file
+            random_index = 0
+            
+            # for many files in dataset
+            if len(X_train) != 1:
+                random_index = np.random.randint(0, len(X_train) - np.int64(batch))
+            
+            # Prepare training set.
+            legit_data = X_train[random_index : random_index + np.int64(batch)].reshape(np.int64(batch), self.width, self.height, self.channels) 
             
             # Generating preditions array with size of half batch.
-            gen_noise = np.random.normal(0, 1, (np.int64(batch/2), self.height))
+            gen_noise = np.random.normal(0, 1, (np.int64(batch), self.height))
             fake_data = self.g_model.predict(gen_noise)
 
             # Creating combined dataset with true data and fake ones
             x_combined_batch = np.concatenate((legit_data, fake_data))
-            y_combined_batch = np.concatenate((np.ones((np.int64(batch/2), 1)), np.zeros((np.int64(batch/2), 1))))
+            y_combined_batch = np.concatenate((np.ones((np.int64(batch), 1)), np.zeros((np.int64(batch), 1))))
 
             debug('Start training discriminator')
             d_loss = []
