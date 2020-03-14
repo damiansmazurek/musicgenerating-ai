@@ -24,7 +24,7 @@ class GANMusicGenerator:
         debug('Compiling of model')
         self.g_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         debug('Creating discriminator')
-        self.d_optimizer = Adam(lr=0.02)
+        self.d_optimizer = Adam(lr=0.04)
         self.d_model = self.__discriminator()
         self.d_model.compile(loss='binary_crossentropy', optimizer=self.d_optimizer,metrics=['accuracy'])
         self.stack_model = Sequential()
@@ -47,9 +47,6 @@ class GANMusicGenerator:
     def __generator(self):
         model = Sequential()
         model.add(Dense(256, input_shape=(self.height,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(1024))
         model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
