@@ -18,13 +18,13 @@ class GANMusicGenerator:
         self.height = height
         self.channels = channels
         debug('Setting Adam optimizer')
-        self.optimizer = Adam(lr=0.0002, beta_1=0.5, decay=8e-8)
+        self.optimizer = Adam(lr=0.002, beta_1=0.5, decay=8e-8)
         debug('Creating generator model.')
         self.g_model = self.__generator()
         debug('Compiling of model')
         self.g_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         debug('Creating discriminator')
-        self.d_optimizer = Adam(lr=0.04)
+        self.d_optimizer = Adam(lr=0.02)
         self.d_model = self.__discriminator()
         self.d_model.compile(loss='binary_crossentropy', optimizer=self.d_optimizer,metrics=['accuracy'])
         self.stack_model = Sequential()
@@ -48,7 +48,8 @@ class GANMusicGenerator:
         model = Sequential()
         model.add(Dense(256, input_shape=(self.height,)))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Dense(512, input_shape=(self.height,)))
+        model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
         model.add(Reshape((self.width, self.height, self.channels)))
         if os.path.exists(self.gen_output_model_path):
