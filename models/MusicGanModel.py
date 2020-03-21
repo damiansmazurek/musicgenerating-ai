@@ -84,11 +84,9 @@ class GANMusicGenerator:
             x_combined_batch = np.concatenate((legit_data, fake_data))
             y_combined_batch = self.__label_smoothing(np.concatenate((np.ones((np.int64(batch), 1)), np.zeros((np.int64(batch), 1)))),smoothing_factor)
 
-            debug('Start training discriminator')
+            # Training discriminator
             d_loss = []
-            self.d_model.trainable = False
             d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
-            debug('End training of discriminator for batch')
 
             # train generator
             noise = np.random.normal(0, 1, (batch, self.height))
