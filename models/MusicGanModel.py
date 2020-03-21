@@ -33,13 +33,17 @@ class GANMusicGenerator:
         self.stack_model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
 
     def __discriminator(self):
-        model = Sequential()
-        model.add(GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels) ))
-        model.add(Conv2D(filters=128, kernel_size=(3, 1), padding='same'))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(Flatten())
-        model.add(Dense(1, activation='sigmoid'))
+        model = Sequential([
+            GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels)),
+            Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
+            LeakyReLU(alpha=0.2),
+            MaxPool2D(2,2),
+            Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
+            LeakyReLU(alpha=0.2),
+            Flatten(),
+            Dense(512, activation='relu')
+            Dense(1, activation='sigmoid')
+        ])
         if os.path.exists(self.disc_output_model_path):
             info("Loading discriminator weights.")
             model.load_weights(self.disc_output_model_path)
@@ -47,9 +51,11 @@ class GANMusicGenerator:
 
     def __generator(self):
         model = Sequential()
-        model.add(Dense(256, input_shape=(self.height,)))
+        model.add(Dense(1028, input_shape=(self.height,)))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(512, input_shape=(self.height,)))
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(2048, input_shape=(self.height,)))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
         model.add(Reshape((self.width, self.height, self.channels)))

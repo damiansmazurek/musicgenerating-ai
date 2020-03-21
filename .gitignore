@@ -127,3 +127,33 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+gen_spec_all.png
+norm_sample0.png
+norm_sample1.png
+norm_sample2.png
+norm_sample3.png
+norm_sample4.png
+norm_sample5.png
+norm_sample6.png
+norm_sample7.png
+sample0.wav.png
+sample1.wav.png
+sample2.wav.png
+sample3.wav.png
+sample4.wav.png
+sample5.wav.png
+sample6.wav.png
+sample7.wav.png
+MODEL_OUTPUT/desc.h5
+MODEL_OUTPUT/gen.h5
+generated/gen_music.wav
+generated/gen1.wav
+generated/gen2.wav
+training_set/sample0.wav
+training_set/sample1.wav
+training_set/sample2.wav
+training_set/sample3.wav
+training_set/sample4.wav
+training_set/sample5.wav
+training_set/sample6.wav
+training_set/sample7.wav
