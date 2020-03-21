@@ -1,0 +1,14 @@
+set CMD=train
+set N_FFT=2048
+set SAMPLE_NUMBER=512
+set MODEL_OUTPUT=MODEL_OUTPUT
+set LOG_LEVEL=info
+set TRAINING_SET_PATH=training_set
+set EPOCH=150000
+set SAVE_INTERVAL=100
+set BATCH_SIZE=1
+set MODEL_BUCKET=modelrepodmmusicai
+set MODEL_NAME=musicgenai_v12
+set TRAINING_SET_BUCKET=testdatasetdmmusicgen
+set OUTPUT_FILE=generated
+set SMOOTHING_FACTOR=0.1

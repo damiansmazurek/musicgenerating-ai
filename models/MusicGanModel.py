@@ -2,13 +2,14 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Sequential
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Flatten, Dense, Conv2D, MaxPool2D, Dropout, BatchNormalization, Reshape, ZeroPadding2D, GaussianNoise
+from tensorflow.keras.layers import Flatten, Dense, Conv2D, Conv2DTranspose, MaxPool2D, Dropout, BatchNormalization, Reshape, ZeroPadding2D, GaussianNoise
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.callbacks import ModelCheckpoint
 from logging import log, info, debug 
 import os
 from utils import ModelsSufix
+import math
 
 class GANMusicGenerator:
     def __init__(self, width, height, channels, ouputmodelpath):
@@ -35,30 +36,37 @@ class GANMusicGenerator:
     def __discriminator(self):
         model = Sequential([
             GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels)),
-            Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
-            LeakyReLU(alpha=0.2),
-            MaxPool2D(2,2),
-            Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
-            LeakyReLU(alpha=0.2),
+            Conv2D(filters=64, kernel_size=(5, 5), padding='same'),
+            LeakyReLU(),
+            Dropout(0.3),
+            Conv2D(filters=128, kernel_size=(5, 5), strides=(2,2), padding='same'),
+            LeakyReLU(),
+            Dropout(0.3),
             Flatten(),
-            Dense(512, activation='relu')
             Dense(1, activation='sigmoid')
         ])
+        info(model.summary())
         if os.path.exists(self.disc_output_model_path):
             info("Loading discriminator weights.")
             model.load_weights(self.disc_output_model_path)
         return model
 
     def __generator(self):
-        model = Sequential()
-        model.add(Dense(1028, input_shape=(self.height,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(512, input_shape=(self.height,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(2048, input_shape=(self.height,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
-        model.add(Reshape((self.width, self.height, self.channels)))
+        model = Sequential([
+            Dense(math.ceil(self.width/8)*math.ceil(self.height/8)*256, input_shape = [100]),
+            BatchNormalization(),
+            LeakyReLU(),
+            Reshape((math.ceil(self.width/8), math.ceil(self.height/8), 256)),
+            Conv2DTranspose(128, (5, 5), strides=(2, 2), padding='same', use_bias=False, output_padding=(self.height%2,self.width%2)),
+            BatchNormalization(),
+            Conv2DTranspose(64, (5, 5), strides=(2, 2), padding='same', use_bias=False, output_padding=(self.height%2,self.width%2)),
+            BatchNormalization(),
+            Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh', output_padding=(self.height%2,self.width%2))
+        ])
+        info('Model required shape shape: %s'%(str((None, self.width, self.height, self.channels))))
+        info('Model output shape: %s'%(str(model.output_shape)))
+        #assert model.output_shape == (None, self.width, self.height, 1)
+        info(model.summary())
         if os.path.exists(self.gen_output_model_path):
             info("Loading generator weights.")
             model.load_weights(self.gen_output_model_path)
@@ -77,9 +85,9 @@ class GANMusicGenerator:
             legit_data = X_train[random_index : random_index + np.int64(batch)].reshape(np.int64(batch), self.width, self.height, self.channels) 
             
             # Generating preditions array with size of half batch.
-            gen_noise = np.random.normal(0, 1, (np.int64(batch), self.height))
+            gen_noise = np.random.normal(0, 1, (np.int64(batch),100))
+            info('Shape of generated data: %s'%(str(gen_noise.shape)))
             fake_data = self.g_model.predict(gen_noise)
-
             # Creating combined dataset with true data and fake ones
             x_combined_batch = np.concatenate((legit_data, fake_data))
             y_combined_batch = self.__label_smoothing(np.concatenate((np.ones((np.int64(batch), 1)), np.zeros((np.int64(batch), 1)))),smoothing_factor)
@@ -89,7 +97,7 @@ class GANMusicGenerator:
             d_loss = self.d_model.train_on_batch(x_combined_batch, y_combined_batch)
 
             # train generator
-            noise = np.random.normal(0, 1, (batch, self.height))
+            noise =np.random.normal(0, 1, (np.int64(batch),100))
             y_mislabled = np.ones((batch, 1))
 
             debug('Start training stacked model')
