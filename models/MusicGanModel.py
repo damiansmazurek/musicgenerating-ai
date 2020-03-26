@@ -95,8 +95,11 @@ class GANMusicGenerator:
             gen_loss = self.stackmodel.train_on_batch(gen_training_noise, np.ones(np.int64(batch)))
             
             info('epoch: %d from %d, [Discriminator :: d_loss_real: %f, d_loss_fake: %f], [ Generator :: loss: %f] ' % (cnt,epochs,acc_real, acc_fake, gen_loss))
-
+            if(cnt == 0):
+                self.__generate_and_save_image(cnt,gen_training_noise)
+                
             if (cnt+1) % save_interval == 0:
+                self.__generate_and_save_image(cnt,gen_training_noise)
                 info('Saving model state after epoch:  %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, 0, gen_loss))
                 self.__run_save_model(save_callback)
                 
@@ -110,11 +113,11 @@ class GANMusicGenerator:
         if callback != None:
             info('Start uploading models to cloud...')
             callback(self.gen_output_model_path, self.disc_output_model_path)
+    
     def __generate_and_save_image(self, epoch, noise):
         generated_data = self.g_model.predict(noise)
         fake_output = self.d_model.predict(generated_data)
         plot_spectrum(np.squeeze(generated_data[0]),'tmp/epoch_'+str(epoch)+'.png')
-        return self.__generator_loss(fake_output)
 
 
 
