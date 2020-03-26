@@ -35,18 +35,17 @@ class TrainingController:
         width = len(train_data[0])
         height = max_height
         channels = 1
+        
+        info("Setting data size to: %d x %d x %d", width,height,channels)
+        train_data_norm = normalize_spectrums(train_data,width,height)
+        info("Train data size: %s"%(str(train_data_norm.shape)))
+        
         # Check if batch is not bigger then training set.
-        if batch > len(train_data):
-            batch = len(train_data)
+        if batch > len(train_data_norm):
+            batch = len(train_data_norm)
             info('Batch is bigger then dataset sample, changing batch size to %d'%(batch))
 
-        info("Setting data size to: %d x %d x %d", width,height,channels)
-        train_data = normalize_spectrums(train_data,width,height)
-
-        train_data_norm= np.asarray(train_data)
-        debug("data size set to %s",train_data_norm.shape)
-
-        debug("Generating GAN")
+        info("Generating GAN model")
         gan = GANMusicGenerator(width,height,channels,model_path)
 
         #train model
