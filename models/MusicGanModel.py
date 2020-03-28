@@ -11,6 +11,7 @@ from logging import log, info, debug
 import os
 from utils import ModelsSufix, plot_spectrum
 import math
+import time
 
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 weight_initializer = tf.keras.initializers.TruncatedNormal(stddev=0.05, mean=0, seed=42) 
@@ -45,7 +46,6 @@ class GANMusicGenerator:
             Flatten(),
             Dense(1, activation='sigmoid')
         ])
-        info(model.summary())
         if os.path.exists(self.disc_output_model_path):
             info("Loading discriminator weights.")
             model.load_weights(self.disc_output_model_path)
@@ -65,9 +65,6 @@ class GANMusicGenerator:
             LeakyReLU(),
             Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh', output_padding=(self.height%2,self.width%2))
         ])
-        info('Model required shape shape: %s'%(str((None, self.width, self.height, self.channels))))
-        info('Model output shape: %s'%(str(model.output_shape)))
-        #assert model.output_shape == (None, self.width, self.height, 1)
         info(model.summary())
         if os.path.exists(self.gen_output_model_path):
             info("Loading generator weights.")
@@ -75,7 +72,10 @@ class GANMusicGenerator:
         return model
 
     def train(self, X_train, epochs=20000, batch = 1, save_interval = 100, smoothing_factor = 0.1, save_callback= None):
+        #Start time measurements
+        start_time = time.time()
         for cnt in range(epochs):
+
             # for single file
             random_index = 0
             
@@ -94,13 +94,14 @@ class GANMusicGenerator:
             gen_training_noise = np.random.normal(0, 1, (batch,100))
             gen_loss = self.stackmodel.train_on_batch(gen_training_noise, np.ones(np.int64(batch)))
             
-            info('epoch: %d from %d, [Discriminator :: d_loss_real: %f, d_loss_fake: %f], [ Generator :: loss: %f] ' % (cnt,epochs,acc_real, acc_fake, gen_loss))
             if(cnt == 0):
                 self.__generate_and_save_image(cnt,gen_training_noise)
                 
             if (cnt+1) % save_interval == 0:
+                end_time = time.time()-start_time
                 self.__generate_and_save_image(cnt,gen_training_noise)
-                info('Saving model state after epoch:  %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, 0, gen_loss))
+                info('Checkpoint epoch: %d from %d, from last checkpoint time %d, [Discriminator :: d_loss_real: %f, d_loss_fake: %f], [ Generator :: loss: %f] ' % (cnt, epochs, end_time, acc_real, acc_fake, gen_loss))
+                start_time = time.time()
                 self.__run_save_model(save_callback)
                 
         info('Training completed, exporting models')
@@ -116,7 +117,6 @@ class GANMusicGenerator:
     
     def __generate_and_save_image(self, epoch, noise):
         generated_data = self.g_model.predict(noise)
-        fake_output = self.d_model.predict(generated_data)
         plot_spectrum(np.squeeze(generated_data[0]),'tmp/epoch_'+str(epoch)+'.png')
 
 

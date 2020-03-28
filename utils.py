@@ -38,17 +38,14 @@ def normalize_spectrums(spectrum_array,width, height):
             result_list = split_single_fft(spect_t, height)
         else:
             result_list = np.concatenate(result_list,split_single_fft(spect, height))
-    info('Size of the array: %s'%(str(result_list.shape)))
     return result_list
 
 def split_single_fft(single_item, sample_number):
     i = 0
     result_samples = []
-    info('Spliting data of size %s'%(str(len(single_item))))
     while (i+1)*sample_number < len(single_item):
         result_samples.append(np.transpose(single_item[i*sample_number:(i+1)*sample_number]))
         i = i + 1
-        info('Result sample size %s'%(str(result_samples)))
     return np.array(result_samples)
 
    
