@@ -3,7 +3,7 @@ import numpy as np
 import random
 from tensorflow.keras import Sequential
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Flatten, Dense, Conv2D, Conv2DTranspose, MaxPool2D, Dropout, BatchNormalization, Reshape, ZeroPadding2D, GaussianNoise
+from tensorflow.keras.layers import Flatten, LSTM, Dense, Conv2D, Conv2DTranspose, MaxPool2D, Dropout, BatchNormalization, Reshape, ZeroPadding2D, GaussianNoise
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -26,15 +26,24 @@ class GANMusicGenerator:
         self.g_model = self.__generator()
         self.g_model.compile(optimizer=self.optimizer, loss='binary_crossentropy')
         self.d_optimizer = Adam(lr=1e-4)
-        self.d_model = self.__discriminator()
+        self.d_model = Sequential()
+        self.d_model.add(self.__discriminator_cnn())
+        self.d_model.add(self.__discriminator())
+        self.d_model.build()
+        self.__load_model(self.d_model,self.disc_output_model_path)
         self.d_model.compile(optimizer=self.d_optimizer, loss = 'binary_crossentropy')
         self.stackmodel = Sequential()
         self.stackmodel.add(self.g_model)
         self.d_model.trainable=False
         self.stackmodel.add(self.d_model)
         self.stackmodel.compile(optimizer=self.optimizer, loss= 'binary_crossentropy')
+    
+    def __load_model(self, model, path):
+         if os.path.exists(path):
+            info("Loading weights for model")
+            model.load_weights(path)
 
-    def __discriminator(self):
+    def __discriminator_cnn(self):
         model = Sequential([
             GaussianNoise(0.3,input_shape=(self.width, self.height, self.channels)),
             Conv2D(filters=64, kernel_size=(5, 5), padding='same', kernel_initializer = weight_initializer),
@@ -43,15 +52,25 @@ class GANMusicGenerator:
             Conv2D(filters=128, kernel_size=(5, 5), strides=(2,2), padding='same', kernel_initializer = weight_initializer),
             LeakyReLU(),
             Dropout(0.3),
+            MaxPool2D(10,10),
+            Flatten(),
+            Dense(1024, activation='sigmoid'),
+            Reshape((32,32))
+        ])
+        return model
+
+    def __discriminator(self):
+        model = Sequential([
+            LSTM(4),
+            BatchNormalization(),
+            LeakyReLU(),
+            Dropout(0.3),
             Flatten(),
             Dense(1, activation='sigmoid')
         ])
-        if os.path.exists(self.disc_output_model_path):
-            info("Loading discriminator weights.")
-            model.load_weights(self.disc_output_model_path)
         return model
 
-    def __generator(self):
+    def __generator_cnn(self):
         model = Sequential([
             Dense(math.ceil(self.width/8)*math.ceil(self.height/8)*256, input_shape = [100]),
             BatchNormalization(),
@@ -71,6 +90,35 @@ class GANMusicGenerator:
             model.load_weights(self.gen_output_model_path)
         return model
 
+    def __generator_nn(self):
+        model = Sequential([
+            Dense(1024, input_shape = [100]),
+            BatchNormalization(),
+            LeakyReLU(),
+            Dense(256, activation = 'relu'),
+            Dense(self.width  * self.height * self.channels, activation='tanh'),
+            Reshape((self.width, self.height, self.channels))
+            ])
+        info(model.summary())
+        if os.path.exists(self.gen_output_model_path):
+            info("Loading generator weights.")
+            model.load_weights(self.gen_output_model_path)
+        return model
+    
+    def __generator(self):
+        model = Sequential([
+            LSTM(4, input_shape=[32,32]),
+            BatchNormalization(),
+            LeakyReLU(),
+            Dense(self.width  * self.height *self.channels, activation='tanh'),
+            Reshape((self.width, self.height, self.channels))
+            ])
+        if os.path.exists(self.gen_output_model_path):
+            model.build()
+            info("Loading generator weights.")
+            model.load_weights(self.gen_output_model_path)
+        return model
+
     def train(self, X_train, epochs=20000, batch = 1, save_interval = 100, smoothing_factor = 0.1, save_callback= None):
         #Start time measurements
         start_time = time.time()
@@ -84,14 +132,14 @@ class GANMusicGenerator:
                 random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
             
             # Prepare training set.
-            legit_data = X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels) 
+            legit_data =X_train[random_index : random_index + np.int64(batch/2)].reshape(np.int64(batch/2), self.width, self.height, self.channels)
             
             # Generating preditions array with size of half batch.
-            gen_noise = np.random.normal(0, 1, (np.int64(batch/2),100))
+            gen_noise = np.random.normal(0, 1, (np.int64(batch/2),32,32))
             gen_data = self.g_model.predict(gen_noise)
             acc_real = self.d_model.train_on_batch(legit_data,self.__label_smoothing(np.ones(np.int64(batch/2)),0.3))
             acc_fake = self.d_model.train_on_batch( gen_data, self.__label_smoothing(np.zeros(np.int64(batch/2)),0.3))
-            gen_training_noise = np.random.normal(0, 1, (batch,100))
+            gen_training_noise =np.random.normal(0, 1, (batch,32,32))
             gen_loss = self.stackmodel.train_on_batch(gen_training_noise, np.ones(np.int64(batch)))
             
             if(cnt == 0):
@@ -118,8 +166,6 @@ class GANMusicGenerator:
     def __generate_and_save_image(self, epoch, noise):
         generated_data = self.g_model.predict(noise)
         plot_spectrum(np.squeeze(generated_data[0]),'tmp/epoch_'+str(epoch)+'.png')
-
-
 
     def __label_smoothing(self, labels, smoothing_factor):
         # smooth the labels

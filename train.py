@@ -57,10 +57,10 @@ class TrainingController:
         gan.train(train_data_norm,epochs, batch, save_interval, smoothing_factor, save_bucket_callback)
 
     def generate(self, model_path, otputfile, N_FFT, sample_number = 1025, sr = 22050):
-        # TODO: Add no model found exception here
         gan = tf.keras.models.load_model(model_path+ ModelsSufix.GEN)
-        spectrum = gan.predict(np.random.normal(0, 1, (1,100))) 
-        sp_data= np.squeeze(spectrum)
-        plot_spectrum(sp_data,'gen_spec_all.png')
-        spect2wav(sp_data, sr, otputfile+'/gen_music.wav', N_FFT)
+        for i in range(20):
+            spectrum = gan.predict(np.random.normal(i, 1, (1,100))) 
+            sp_data= np.squeeze(spectrum)
+            #plot_spectrum(sp_data,'gen_spec_all.png')
+            spect2wav(sp_data, sr, otputfile+'/gen_music'+str(i)+'.wav', N_FFT)
 
