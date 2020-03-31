@@ -1,7 +1,7 @@
 import os
 import logging
 from train import TrainingController
-from utils import download_blobs, download_model, upload_blob_to_bucket, upload_model
+from utils import download_blobs, download_model, upload_blob_to_bucket, upload_model, ModelsSufix
 
 # APP AND HYPERPARAMETERS CONFIGURATION
 
@@ -61,4 +61,4 @@ else:
     OUTPUT_FILE = os.getenv('OUTPUT_FILE')
     if not os.path.exists(OUTPUT_FILE):
         os.makedirs(OUTPUT_FILE)
-    training_controller.generate(MODEL_OUTPUT,OUTPUT_FILE,N_FFT,SAMPLE_NUMBER)
+    training_controller.generate(MODEL_OUTPUT+'/'+ModelsSufix.GEN,OUTPUT_FILE,N_FFT,'training_set/sample0.wav',SAMPLE_NUMBER)
